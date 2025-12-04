@@ -6,6 +6,7 @@ class AppStorage {
 
   // ========================= KEYS =========================
   static const String _tokenKey = 'token';
+  static const String _uIdKey = 'uId';
   static const String _temporaryTokenKey = 'temporaryToken';
   static const String _mobileCodeKey = 'mobileCode';
   static const String _onboardSaveKey = 'onboardSave';
@@ -21,6 +22,7 @@ class AppStorage {
   // ========================= SAVE DATA =========================
   static Future<void> save({
     String? token,
+    String? uId,
     String? temporaryToken,
     String? mobileCode,
     bool? onboardSave,
@@ -34,6 +36,7 @@ class AppStorage {
   }) async {
     if (token != null) await _storage.write(_tokenKey, token.replaceAll('"', '').trim());
     if (temporaryToken != null) await _storage.write(_temporaryTokenKey, temporaryToken);
+    if (uId != null) await _storage.write(_uIdKey, uId);
     if (mobileCode != null) await _storage.write(_mobileCodeKey, mobileCode);
     if (onboardSave != null) await _storage.write(_onboardSaveKey, onboardSave);
     if (isLoggedIn != null) await _storage.write(_isLoggedInKey, isLoggedIn);
@@ -52,6 +55,7 @@ class AppStorage {
   // ========================= GETTERS =========================
   static String get token => (_storage.read(_tokenKey) ?? '').trim();
   static String get temporaryToken => _storage.read(_temporaryTokenKey) ?? '';
+  static String get uId => _storage.read(_uIdKey) ?? '';
   static String get mobileCode => _storage.read(_mobileCodeKey) ?? '';
   static bool get isLoggedIn => _storage.read(_isLoggedInKey) ?? false;
   static bool get onboardSave => _storage.read(_onboardSaveKey) ?? false;
@@ -90,6 +94,7 @@ class AppStorage {
   // ========================= HELPER METHODS =========================
   static AppStorageModel get common {
     return AppStorageModel(
+      uId: uId,
       token,
       onboardSave,
       isLoggedIn,

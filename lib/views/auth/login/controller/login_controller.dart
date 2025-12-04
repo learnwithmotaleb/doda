@@ -37,8 +37,8 @@ class LoginController extends GetxController {
     super.onInit();
 
     /// Default test credentials
-    emailController.text = 'qeo@yopmail.com';
-    passwordController.text = '112233';
+    emailController.text = 'jmmotaleb100@gmail.com';
+    passwordController.text = '123456';
   }
 
   /// ❌ REMOVE dispose()

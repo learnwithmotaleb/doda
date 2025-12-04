@@ -1,5 +1,6 @@
 class AppStorageModel {
   final String token;
+  final String uId;
   final String temporaryToken;
   final String mobileCode;
   final bool onboardSave;
@@ -19,5 +20,6 @@ class AppStorageModel {
     this.kycStatus, {
     required this.temporaryToken,
     required this.mobileCode,
+    required this.uId,
   });
 }

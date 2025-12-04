@@ -13,7 +13,8 @@ class TypeMessageWidget extends GetView<InboxController> {
         children: [
           // 📸 Image picker
           InkWell(
-            onTap: controller.pickImageFromGallery,
+            // onTap: controller.pickImageFromGallery,
+            onTap: (){},
             splashColor: Colors.transparent,
             highlightColor: Colors.transparent,
             child: SvgPicture.asset(

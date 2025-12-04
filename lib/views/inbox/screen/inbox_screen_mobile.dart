@@ -1,10 +1,4 @@
-
-
-import 'package:doda_work/core/utils/app_storage.dart';
-import 'package:get/get_state_manager/src/simple/get_view.dart';
-
 import '../../../core/utils/basic_import.dart';
-import '../../../widgets/auth_app_bar.dart';
 import '../controller/inbox_controller.dart';
 
 class InboxScreenMobile extends GetView<InboxController> {
@@ -12,92 +6,116 @@ class InboxScreenMobile extends GetView<InboxController> {
 
   @override
   Widget build(BuildContext context) {
+    final args = Get.arguments ?? {};
+    final participantName = args["name"] ?? "User";
+    final participantEmail = args["email"];
+    final profileImage = args["profileImage"];
+    controller.connectToSocket();
+
     return Scaffold(
-      appBar: CommonAppBar(
-        title: 'Chat',
-        // Optionally, you can show participant names here if passed via arguments
-        // title: Get.arguments != null ? Get.arguments['title'] : 'Chat',
+      appBar: AppBar(
+        title: Row(
+          children: [
+            CircleAvatar(
+              radius: 20,
+              backgroundColor: CustomColors.primary,
+              backgroundImage: profileImage != null
+                  ? NetworkImage("http://your-base-url/$profileImage")
+                  : null,
+              child: profileImage == null
+                  ? Text(
+                      participantName[0].toUpperCase(),
+                      style: const TextStyle(color: Colors.white),
+                    )
+                  : null,
+            ),
+            const SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  participantName,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (participantEmail != null)
+                  Text(
+                    participantEmail,
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  ),
+              ],
+            ),
+          ],
+        ),
       ),
       body: SafeArea(
         child: Column(
           children: [
-            /// Chat messages list
             Expanded(
               child: Obx(
-                    () {
-                  final messages = controller.messageList;
-                  if (messages.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        'No messages yet',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    );
-                  }
-                  return ListView.builder(
-                    controller: controller.scrollController,
-                    reverse: true, // Latest message at bottom
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    itemCount: messages.length,
-                    itemBuilder: (context, index) {
-                      final message = messages[messages.length - 1 - index]; // reverse order
-                      return Align(
-                        alignment: message.isMe
-                            ? Alignment.centerRight
-                            : Alignment.centerLeft,
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(vertical: 4),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: message.isMe
-                                ? CustomColors.primary
-                                : Colors.grey.shade200,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: message.imageUrl != null
-                              ? Image.network(
-                            message.imageUrl!,
-                            width: 200,
-                            height: 200,
-                            fit: BoxFit.cover,
-                          )
-                              : Text(
-                            message.text ?? '',
-                            style: TextStyle(
-                              color: message.isMe
-                                  ? Colors.white
-                                  : Colors.black,
-                            ),
+                () => ListView.builder(
+                  controller: controller.scrollController,
+                  reverse: true,
+                  itemCount: controller.messageList.length,
+                  itemBuilder: (context, index) {
+                    final message = controller.messageList[index];
+
+                    return Align(
+                      alignment: message.isMe
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(
+                          vertical: 4,
+                          horizontal: 8,
+                        ),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: message.isMe
+                              ? CustomColors.primary
+                              : Colors.grey[300],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          message.text ?? '',
+                          style: TextStyle(
+                            color: message.isMe ? Colors.white : Colors.black,
+                            fontSize: 16,
                           ),
                         ),
-                      );
-                    },
-                  );
-                },
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
 
-            /// Message input area
             SafeArea(
               child: Container(
-                padding: EdgeInsets.symmetric(
+                padding: const EdgeInsets.symmetric(
                   horizontal: 12,
-                  vertical: Dimensions.verticalSize * 0.5,
+                  vertical: 8,
                 ),
                 color: Colors.white,
                 child: Row(
                   children: [
-                    /// Image picker button
                     IconButton(
-                      icon: const Icon(Icons.image, color: CustomColors.primary),
+                      icon: const Icon(
+                        Icons.image,
+                        color: CustomColors.primary,
+                      ),
                       onPressed: () => controller.pickImageFromGallery(),
                     ),
-
-                    /// Text input
                     Expanded(
                       child: TextField(
                         controller: controller.textController,
+                        onChanged: (value) {
+                          controller.hasTextOrImage.value = value
+                              .trim()
+                              .isNotEmpty;
+                        },
                         decoration: InputDecoration(
                           hintText: 'Type a message...',
                           border: OutlineInputBorder(
@@ -107,24 +125,15 @@ class InboxScreenMobile extends GetView<InboxController> {
                           filled: true,
                           fillColor: Colors.grey.shade100,
                           contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 0),
+                            horizontal: 16,
+                            vertical: 0,
+                          ),
                         ),
                       ),
                     ),
-
-                    /// Send button
-                    Obx(
-                          () => IconButton(
-                        icon: Icon(
-                          Icons.send,
-                          color: controller.hasTextOrImage.value
-                              ? CustomColors.primary
-                              : Colors.grey,
-                        ),
-                        onPressed: controller.hasTextOrImage.value
-                            ? () => controller.sendMessage()
-                            : null,
-                      ),
+                    IconButton(
+                      icon: Icon(Icons.send, color: CustomColors.primary),
+                      onPressed: () => controller.sendMessage(),
                     ),
                   ],
                 ),

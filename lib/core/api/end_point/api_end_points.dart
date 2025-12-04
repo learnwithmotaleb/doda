@@ -1,5 +1,5 @@
 class ApiEndPoints {
-  static final mainDomain = 'http://10.10.20.52:6002';//https://dodawork.com/
+  static final mainDomain = 'http://10.10.20.52:6002'; //https://dodawork.com/
   static final baseUrl = '$mainDomain/';
 
   /// API End Points
@@ -25,8 +25,8 @@ class ApiEndPoints {
   static const getAllCategory = 'category/active-categories';
   static const getFavoritesCategory = 'category/favorites';
   static const patchToggleToFavorites = 'category/toggle-to-favorites';
-  static const getSubCategoriesByCategory = 'category/subcategories-by-category?categoryId=68c6f418136f3599e8c394b4';
-
+  static const getSubCategoriesByCategory =
+      'category/subcategories-by-category?categoryId=68c6f418136f3599e8c394b4';
 
   static const categoryPreview = 'categories/books';
   static const serviceCategory = 'category/active-categories';
@@ -52,10 +52,8 @@ class ApiEndPoints {
 
   static final categoryAll = '${baseUrl}category/active-categories';
 
-
   static String getServiceRequestAll({required int page}) {
     return '${baseUrl}service-requests/my-requests?page=$page';
-
   }
 
   static serviceCreate() => '${baseUrl}service-requests/create';
@@ -63,12 +61,10 @@ class ApiEndPoints {
   // static myService({required String status, required int page}) =>
   //     '${baseUrl}service-requests/my-requests?status=$status&page=$page&limit=20';
 
-
   // static myService({required String status, required int page}) =>
   //     '${baseUrl}service-requests/my-requests';
 
   //service-requests/my-requests
-
 
   static providerService({required String status, required int page}) =>
       '${baseUrl}provider/potential-requests?providerStatus=$status&page=$page&limit=20';
@@ -79,27 +75,30 @@ class ApiEndPoints {
       '${baseUrl}notification/get-all-notifications?page=$page&limit=20';
 
   var notificationId = "";
+
   //====================Notification=========================
-  static final getAllNotification = '${baseUrl}notification/get-all-notifications';
-  static final getNotification = '${baseUrl}notification/get-notification?notificationId=notificationId';
-  static final deleteNotification = '${baseUrl}notification/delete-notification';
+  static final getAllNotification =
+      '${baseUrl}notification/get-all-notifications';
+  static final getNotification =
+      '${baseUrl}notification/get-notification?notificationId=notificationId';
+  static final deleteNotification =
+      '${baseUrl}notification/delete-notification';
 
   //=================Review=================================
   static final postPostReview = '${baseUrl}review/post-review';
   static final getAllReview = '${baseUrl}review/get-all-reviews';
+
   static String getReview({required String reviewId}) =>
       '${baseUrl}review/get-review?reviewId=$reviewId';
   static final getReviewProvider = 'review/get-provider-reviews';
 
-
   // ================== Chat ==================
-  static  String getConversationList = 'chat/get-conversation-list';
+  static String getConversationList = 'chat/get-conversation-list';
 
+  static String getConversationById(String conversationId) =>
+      'chat/get-conversation/$conversationId';
 
-  static  String getConversationById(String conversationId) =>
-      '$baseUrl/chat/get-conversation/$conversationId';
-
-  static  String postBlockUser(String targetUserId) =>
+  static String postBlockUser(String targetUserId) =>
       '$baseUrl/chat/block/$targetUserId';
 
   static String postUnblockUser(String targetUserId) =>
@@ -110,20 +109,4 @@ class ApiEndPoints {
   // static final postUnblockUser = '${baseUrl}chat/unblock/:targetUserId';
   static final postDeleteMessage = '${baseUrl}chat/delete-message/:messageId';
   static final postChatImageORVideo = '${baseUrl}chat/chat-images-video';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }

@@ -22,12 +22,19 @@ class AuthService {
       isLoading: isLoading,
       body: inputBody,
       onSuccess: (result) {
-        final role = result.data.user.authId.role.toUpperCase(); // "USER" or "PROVIDER"
+        final role = result.data.user.authId.role.toUpperCase();
         print("User Role: $role");
 
-        // Save token, role, and isVendor flag
+        final id = result.data.user.id;
+
+        AppStorage.save(uId: id);
+
+
+        print('-------------------------------');
+        print('U ID = ${AppStorage.uId}');
+
         AppStorage.save(token: result.data.accessToken, isLoggedIn: true);
-        AppStorage.saveRole(role); // <-- New method to save role
+        AppStorage.saveRole(role);
         AppStorage.isVendor = role == "PROVIDER";
 
         // Navigate based on role
@@ -38,8 +45,6 @@ class AuthService {
         } else {
           MessageHelper.showError("Please Select Your Role.\nThank you");
         }
-
-
       },
     );
   }
@@ -152,7 +157,7 @@ class AuthService {
       isLoading: isLoading,
       body: inputBody,
       showSuccessSnackBar: true,
-      onSuccess: (result){
+      onSuccess: (result) {
         MessageHelper.showSuccess("Change Password Success");
         Get.back();
         Get.toNamed(Routes.loginScreen);

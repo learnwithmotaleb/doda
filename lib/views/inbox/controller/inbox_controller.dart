@@ -1,113 +1,137 @@
+import 'dart:developer';
+
+import 'package:socket_io_client/socket_io_client.dart' as IO;
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:web_socket_channel/io.dart';
+import 'package:socket_io_client/socket_io_client.dart';
+import '../../../core/api/end_point/api_end_points.dart';
+import '../../../core/api/services/api.dart';
+import '../../../core/utils/app_storage.dart';
 import '../model/send_message_model.dart';
 
 class InboxController extends GetxController {
-  /// Message list
-  final messageList = <MessageModel>[].obs;
-
-  /// Input controller
   final textController = TextEditingController();
   final scrollController = ScrollController();
 
-  /// State flags
+  final participantName = ''.obs;
+  final participantEmail = ''.obs;
+  final participantProfile = ''.obs;
   final hasText = false.obs;
   final hasTextOrImage = false.obs;
 
-  /// Image picker
+  final messageList = <MessageModel>[].obs;
   final ImagePicker _picker = ImagePicker();
 
-  /// WebSocket channel
-  late IOWebSocketChannel channel;
+
+  // Socket
+  late IO.Socket socket;
+
+  String? conversationId;
 
   @override
   void onInit() {
     super.onInit();
 
-    // Connect WebSocket
+    final args = Get.arguments ?? {};
+    conversationId = args['conversationId'];
+    if (conversationId != null) fetchConversation(conversationId!);
+
     connectToSocket();
-
-    // Listen text changes
-    textController.addListener(() {
-      hasText.value = textController.text.trim().isNotEmpty;
-      hasTextOrImage.value = hasText.value;
-    });
   }
 
-  /// Connect to WebSocket server
   void connectToSocket() {
-    channel = IOWebSocketChannel.connect(Uri.parse('ws://10.10.11.28:8080'));
-
-    channel.stream.listen(
-          (data) {
-        messageList.add(
-          MessageModel(text: data.toString(), isMe: false, time: _getTime()),
-        );
-        _scrollToBottom();
-      },
-      onError: (error) => print("Socket Error: $error"),
-      onDone: () => print("Disconnected from WebSocket"),
+    final url = "http://10.10.20.52:6002/?id=${AppStorage.uId}&role=${AppStorage.role}";
+    print('**********************************************************************');
+    print('**********************************************************************');
+    print('**********************************************************************');
+    log("Connecting to socket: $url");
+    socket = IO.io(url,
+      IO.OptionBuilder()
+          .setTransports(['websocket'])
+          .setQuery({'&role=': AppStorage.role})
+          .setReconnectionAttempts(10)
+          .enableAutoConnect()
+          .build(),
     );
+
+    socket.connect();
+    socket.onConnect((_) => log("✅ Socket connected: ${AppStorage.uId}"));
+    socket.onDisconnect((_) => log("❌ Socket disconnected"));
+
+    // Only add messages from other users
+    // socket.on("new-message", (data) {
+    //   if (data["sender"]["_id"] == AppStorage.userID) return;
+    //
+    //   messagesList.add({
+    //     "message": data["message"] ?? '',
+    //     "isMe": false,
+    //     "isSent": true,
+    //     "formattedTime": Helpers.formatTimestamp(data["createdAt"]),
+    //     "id": data["_id"],
+    //     "type": data["type"] ?? "text",
+    //     "files": data["files"],
+    //   });
+    // });
   }
 
-  /// Send text message
-  void sendMessage() {
-    final text = textController.text.trim();
-    if (text.isEmpty) return;
 
-    messageList.add(MessageModel(text: text, isMe: true, time: _getTime()));
-    _scrollToBottom();
 
-    channel.sink.add(text);
 
-    textController.clear();
-    hasText.value = false;
-    hasTextOrImage.value = false;
 
-    // Demo reply
-    Future.delayed(const Duration(milliseconds: 300), () {
-      messageList.add(
-        MessageModel(
-          text: "Demo reply to: $text",
-          isMe: false,
-          time: _getTime(),
-        ),
-      );
-      _scrollToBottom();
-    });
-  }
+  void sendMessage() {}
 
-  /// Pick image from gallery
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   Future<void> pickImageFromGallery() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image != null) sendImageMessage(image.path);
   }
 
-  /// Send image message
   void sendImageMessage(String imagePath) {
-    messageList.add(
-      MessageModel(imageUrl: imagePath, isMe: true, time: _getTime()),
+    final newMessage = MessageModel(
+      imageUrl: imagePath,
+      isMe: true,
+      time: _getTime(),
     );
+    messageList.add(newMessage);
     _scrollToBottom();
 
-    // Demo reply
-    Future.delayed(const Duration(seconds: 1), () {
-      messageList.add(
-        MessageModel(text: "Nice picture 👍", isMe: false, time: _getTime()),
-      );
-      _scrollToBottom();
-    });
+    if (conversationId != null) {
+      // _sendImageMessageToAPI(imagePath);
+    }
   }
 
-  /// Get current time
   String _getTime() {
     final now = DateTime.now();
     return "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
   }
 
-  /// Scroll chat to bottom
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (scrollController.hasClients) {
@@ -120,11 +144,57 @@ class InboxController extends GetxController {
     });
   }
 
+  /// Fetch conversation messages from API
+  Future<void> fetchConversation(String conversationId) async {
+    try {
+      await ApiRequest.get(
+        endPoint: ApiEndPoints.getConversationById(conversationId),
+        isLoading: false.obs,
+        fromJson: (json) {
+          final conv = json['conversation'];
+          final part = json['participant'];
+
+          // Participant info
+          participantName.value = part['name'] ?? '';
+          participantEmail.value = part['email'] ?? '';
+          participantProfile.value = part['profileImage'] ?? '';
+
+          // Messages
+          final List<MessageModel> messages = [];
+          if (conv['messages'] != null) {
+            for (var m in conv['messages']) {
+              final sender = m['sender'];
+              messages.add(
+                MessageModel(
+                  id: m['_id'],
+                  conversationId: m['conversationId'],
+                  text: m['text'],
+                  images: List<String>.from(m['images'] ?? []),
+                  senderId: sender['id'],
+                  senderName: sender['name'],
+                  senderProfileImage: sender['profileImage'],
+                  isMe: sender['id'] == AppStorage.userId,
+                  time: m['createdAt'],
+                ),
+              );
+            }
+          }
+
+          messageList.value = messages;
+          _scrollToBottom();
+          return messages;
+        },
+      );
+    } catch (e) {
+      print("Error fetching conversation: $e");
+    }
+  }
+
   @override
   void onClose() {
-    channel.sink.close();
+    socket.disconnect();
+    socket.dispose();
     textController.dispose();
-    scrollController.dispose();
     super.onClose();
   }
 }

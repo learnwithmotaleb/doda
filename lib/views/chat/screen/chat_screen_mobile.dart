@@ -8,13 +8,11 @@ import '../controller/chat_controller.dart';
 class ChatScreenMobile extends StatelessWidget {
   ChatScreenMobile({super.key});
 
-  // Inject ChatController
   final ChatController controller = Get.put(ChatController());
 
   @override
   Widget build(BuildContext context) {
     final myId = AppStorage.userId;
-    final myRole = AppStorage.role; // "USER" or "PROVIDER"
 
     return Scaffold(
       appBar: AppBar(
@@ -57,35 +55,41 @@ class ChatScreenMobile extends StatelessWidget {
         child: Obx(() {
           if (controller.isLoading.value) {
             return const Center(
-              child: CircularProgressIndicator(
-                color: CustomColors.primary,
-              ),
+              child: CircularProgressIndicator(color: CustomColors.primary),
             );
           }
 
-          if (controller.chatList.isEmpty) {
+          /// 🔥 FILTER: Hide chats where only I am the participant
+          final filteredChats = controller.chatList.where((chat) {
+            final others = controller
+                .getAllParticipants(chat)
+                .where((p) => p.id != myId)
+                .toList();
+            return others.isNotEmpty; // Only show chats with other users
+          }).toList();
+
+          if (filteredChats.isEmpty) {
             return const Center(child: Text("No participants yet"));
           }
 
           return ListView.builder(
-            itemCount: controller.chatList.length,
+            itemCount: filteredChats.length,
             itemBuilder: (context, index) {
-              final chat = controller.chatList[index];
+              final chat = filteredChats[index];
 
-              // Get all participants except the logged-in user
+              /// Find participants except myself
               final participants = controller
                   .getAllParticipants(chat)
                   .where((p) => p.id != myId)
                   .toList();
 
-              // If only participant is yourself, hide this chat
               if (participants.isEmpty) return const SizedBox.shrink();
 
-              // Show only the first participant (1-on-1 chat)
+              // For 1-to-1 chat, take the last participant
               final participant = participants.last;
 
               return ListTile(
-                onTap: () => controller.openConversation(chat),
+                onTap: () => controller.openConversation(chat, participant),
                 leading: CircleAvatar(
                   radius: 25,
                   backgroundColor: CustomColors.primary,
